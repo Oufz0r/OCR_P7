@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 
-const stuffRoutes = require('./routes/stuff');
+const booksRoutes = require('./routes/books');
 const userRoutes = require('./routes/user');
 
 mongoose.connect('mongodb+srv://SoapDP:080289@cluster0.ulb6wgs.mongodb.net/?retryWrites=true&w=majority',
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.use('/api/stuff', stuffRoutes);
+app.use('/api/books', booksRoutes);
 app.use('/api/auth', userRoutes);
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
