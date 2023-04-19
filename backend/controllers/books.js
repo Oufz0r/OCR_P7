@@ -1,21 +1,43 @@
 const Book = require('../models/Book');
 const fs = require('fs');
+const sharp = require('sharp');
 
 
-exports.createBook = (req, res, next) => {
-    const bookObject = JSON.parse(req.body.book);
-    delete bookObject._id;
-    delete bookObject._userId;
-    const book = new Book({
-        ...bookObject,
-        userId: req.auth.userId,
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
-        averageRating: 0
-    });
+exports.createBook = async (req, res, next) => {
+    try {
+        // On redimensionne l'image uploadée
+        const resizedImage = await sharp(req.file.path)
+            .resize(390, 536)
+            .jpeg({ quality: 90 })
+            .toBuffer();
+        
+        // On enregistre la nouvelle image redimensionnée
+        const imageName = `resized_${req.file.filename}`;
+        await fs.promises.writeFile(`./${req.file.destination}/${imageName}`, resizedImage);
+        
+        const bookObject = JSON.parse(req.body.book);
+        delete bookObject._id;
+        delete bookObject._userId;
+        
+        // On crée un nouvel objet Book avec les propriétés redimensionnées
+        const book = new Book({
+            ...bookObject,
+            userId: req.auth.userId,
+            imageUrl: `${req.protocol}://${req.get('host')}/images/${imageName}`,
+            averageRating: 0
+        });
+        
+        // On enregistre le nouveau livre
+        await book.save();
 
-    book.save()
-    .then(() => { res.status(201).json({message: 'Objet enregistré !'})})
-    .catch(error => { res.status(400).json( { error })})
+        // Une fois le processus terminé, on supprime l'image originale
+        const originalImageName = req.file.filename;
+        await fs.promises.unlink(`./${req.file.destination}/${originalImageName}`);
+
+        res.status(201).json({ message: 'Livre enregistré !' });
+    } catch (error) {
+        res.status(400).json({ error });
+    }
 };
 
 exports.modifyBook = (req, res, next) => {
@@ -28,7 +50,7 @@ exports.modifyBook = (req, res, next) => {
     Book.findOne({ _id: req.params.id })
     .then((book) => {
         if (book.userId != req.auth.userId) {
-            res.status(400).json({ message: 'Non-autorisé' });
+            res.status(403).json({ message: 'Non-autorisé' });
         } else {
             if (req.file)
             {
@@ -36,12 +58,12 @@ exports.modifyBook = (req, res, next) => {
                 const filename = book.imageUrl.split('/images/')[1];
                 fs.unlink(`images/${filename}`, () => {
                     Book.updateOne({ _id: req.params.id}, { ...bookObject, _id: req.params.id })
-                        .then(() => res.status(200).json({ message: 'Objet modifié !' }))
+                        .then(() => res.status(200).json({ message: 'Livre modifié !' }))
                         .catch(error => res.status(401).json({ error }));
                 });
             } else {
                     Book.updateOne({ _id: req.params.id}, { ...bookObject, _id: req.params.id })
-                        .then(() => res.status(200).json({ message: 'Objet modifié !' }))
+                        .then(() => res.status(200).json({ message: 'Livre modifié !' }))
                         .catch(error => res.status(401).json({ error }));
             }
         }
@@ -53,12 +75,12 @@ exports.deleteBook = (req, res, next) => {
     Book.findOne({ _id: req.params.id})
     .then(book => {
         if (book.userId != req.auth.userId) {
-            res.status(401).json({message: 'Not authorized'});
+            res.status(403).json({message: 'Non-autorisé'});
         } else {
             const filename = book.imageUrl.split('/images/')[1];
             fs.unlink(`images/${filename}`, () => {
                 Book.deleteOne({_id: req.params.id})
-                .then(() => { res.status(200).json({message: 'Objet supprimé !'})})
+                .then(() => { res.status(200).json({message: 'Livre supprimé !'})})
                 .catch(error => res.status(401).json({ error }));
             });
         }
@@ -101,7 +123,7 @@ exports.rateBook = (req, res, next) => {
         const userRating = ratings.find(rating => rating.userId === userId);
 
         if (userRating) {
-            return res.status(400).json({ error: "Vous avez déjà noté ce livre." });
+            return res.status(400).json({ error });
         }
 
         const sum = ratings.reduce((acc, rating) => acc + rating.grade, 0);
@@ -115,7 +137,7 @@ exports.rateBook = (req, res, next) => {
             { _id: req.params.id },
             { $push: { ratings: newRating }, averageRating: average }
         )
-            .then(() => res.status(200).json({ _id: req.params.id, averageRating: average }))
+            .then(() => res.status(200).json({ id: req.params.id, _id: req.params.id, averageRating: average }))
             .catch(error => res.status(401).json({ error }));
     })
     .catch(error => res.status(400).json({ error }));
