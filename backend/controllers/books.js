@@ -41,34 +41,56 @@ exports.createBook = async (req, res, next) => {
 };
 
 exports.modifyBook = (req, res, next) => {
-    const bookObject = req.file ? {
-        ...JSON.parse(req.body.book),
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    } : { ...req.body }
-
-    delete bookObject._userId;
-    Book.findOne({ _id: req.params.id })
-    .then((book) => {
-        if (book.userId != req.auth.userId) {
-            res.status(403).json({ message: 'Non-autorisé' });
-        } else {
-            if (req.file)
-            {
-                // On supprime l'ancienne image
-                const filename = book.imageUrl.split('/images/')[1];
-                fs.unlink(`images/${filename}`, () => {
-                    Book.updateOne({ _id: req.params.id}, { ...bookObject, _id: req.params.id })
-                        .then(() => res.status(200).json({ message: 'Livre modifié !' }))
-                        .catch(error => res.status(401).json({ error }));
-                });
+    try {
+        const bookObject = req.file ? {
+            ...JSON.parse(req.body.book),
+            imageUrl: `${req.protocol}://${req.get('host')}/images/resized_${req.file.filename}`
+        } : { ...req.body }
+        
+        delete bookObject._userId;
+        Book.findOne({ _id: req.params.id })
+        .then((book) => {
+            if (book.userId != req.auth.userId) {
+                res.status(403).json({ message: 'Non-autorisé' });
             } else {
-                    Book.updateOne({ _id: req.params.id}, { ...bookObject, _id: req.params.id })
-                        .then(() => res.status(200).json({ message: 'Livre modifié !' }))
-                        .catch(error => res.status(401).json({ error }));
+                // Si l'utilisateur upload une nouvelle image
+                if (req.file) {
+                    // On redimensionne la nouvelle image
+                    const resizedImage = sharp(req.file.path)
+                    .resize(390, 536)
+                    .jpeg({ quality: 90 })
+                    .toBuffer();
+                    
+                    // On enregistre la nouvelle image redimensionnée dans le dossier
+                    const imageName = `resized_${req.file.filename}`;
+                    resizedImage.then(data => {
+                        fs.promises.writeFile(`./${req.file.destination}/${imageName}`, data);
+
+                        // Une fois le processus terminé, on supprime l'image originale
+                        const originalImageName = req.file.filename;
+                        fs.promises.unlink(`./${req.file.destination}/${originalImageName}`);
+
+                        // On supprime l'ancienne image du livre et on met à jour le livre
+                        const filename = book.imageUrl.split('/images/resized_')[1];
+                        fs.unlink(`images/resized_${filename}`, () => {
+                            Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                            .then(() => res.status(200).json({ message: 'Livre modifié !' }))
+                            .catch(error => res.status(401).json({ error }));
+                        });
+                    }).catch(error => res.status(400).json({ error }));
+                } else {
+                    // Sinon, on met à jour le livre sans nouvelle image
+                    Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                    .then(() => res.status(200).json({ message: 'Livre modifié !' }))
+                    .catch(error => res.status(401).json({ error }));
+                }
             }
-        }
-    })
-    .catch(error => res.status(400).json({ error }));
+        })
+        .catch(error => res.status(400).json({ error }));
+        
+    } catch (error) {
+        res.status(400).json({ error });
+    }
 };
 
 exports.deleteBook = (req, res, next) => {
@@ -123,6 +145,7 @@ exports.rateBook = (req, res, next) => {
         const userRating = ratings.find(rating => rating.userId === userId);
 
         if (userRating) {
+            // return res.status(400).json({ error: 'Vous avez déjà noté ce livre' });
             return res.status(400).json({ error });
         }
 
@@ -132,12 +155,14 @@ exports.rateBook = (req, res, next) => {
             grade: req.body.rating
         }
         ratings.push(newRating);
-        const average = Math.ceil((sum + newRating.grade) / ratings.length);
+        const average = (sum + newRating.grade) / ratings.length;
+        // On arrondit à une decimale
+        const roundedAverage = parseFloat(average.toFixed(1));
         Book.updateOne(
             { _id: req.params.id },
-            { $push: { ratings: newRating }, averageRating: average }
+            { $push: { ratings: newRating }, averageRating: roundedAverage  }
         )
-            .then(() => res.status(200).json({ id: req.params.id, _id: req.params.id, averageRating: average }))
+            .then(() => res.status(200).json({ id: req.params.id, _id: req.params.id, averageRating: roundedAverage }))
             .catch(error => res.status(401).json({ error }));
     })
     .catch(error => res.status(400).json({ error }));
