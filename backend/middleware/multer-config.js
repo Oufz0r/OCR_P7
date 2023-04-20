@@ -20,9 +20,8 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, callback) => {
-    console.log(file);
     if (!MIME_TYPES.hasOwnProperty(file.mimetype)) {
-        return callback(new Error('file is not allowed'))
+        return callback(new Error('format de fichier non-autorisé'))
     }
     const bookObject = JSON.parse(req.body.book);
     if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre)
