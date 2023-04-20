@@ -122,8 +122,9 @@ exports.bestRatings = async (req, res, next) => {
     // récupère les 3 livres ayant la meilleure note moyenne
     try { const bestRatings = await Book.find()
         .sort({ averageRating: -1 }).limit(3);
-        // console.log("bestRatings: ", bestRatings);
-        res.status(200).json(bestRatings);
+        res.status(200).json( bestRatings );
+        // console.log( bestRatings );
+        // renvoyer le tableau JSON ?
     } catch (error) {
         // console.log("error: ", error);
         res.status(400).json({ error: error });
@@ -155,14 +156,17 @@ exports.rateBook = (req, res, next) => {
             grade: req.body.rating
         }
         ratings.push(newRating);
+
         const average = (sum + newRating.grade) / ratings.length;
         // On arrondit à une decimale
         const roundedAverage = parseFloat(average.toFixed(1));
+
         Book.updateOne(
             { _id: req.params.id },
             { $push: { ratings: newRating }, averageRating: roundedAverage  }
         )
-            .then(() => res.status(200).json({ id: req.params.id, _id: req.params.id, averageRating: roundedAverage }))
+            .then(() => Book.findOne({ _id: req.params.id }))
+            .then((book) => res.status(200).json(book))
             .catch(error => res.status(401).json({ error }));
     })
     .catch(error => res.status(400).json({ error }));
