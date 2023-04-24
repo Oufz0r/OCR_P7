@@ -20,10 +20,12 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, callback) => {
+    // on vérifie si le format du fichier est autorisé
     if (!MIME_TYPES.hasOwnProperty(file.mimetype)) {
         return callback(new Error('format de fichier non-autorisé'))
     }
     const bookObject = JSON.parse(req.body.book);
+    // On vérifie si le formulaire est complet
     if (!bookObject.title || !bookObject.author || !bookObject.year || !bookObject.genre)
     {
         return callback(new Error('Il manque quelque chose au formulaire'));
