@@ -30,7 +30,7 @@ const fileFilter = (req, file, callback) => {
     {
         return callback(new Error('Il manque quelque chose au formulaire'));
     }
-    callback(null, true)
+    callback(null, true);
 };
 
 module.exports = multer({fileFilter: fileFilter, storage: storage}).single('image');
