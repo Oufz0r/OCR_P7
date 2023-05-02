@@ -76,14 +76,14 @@ exports.modifyBook = (req, res, next) => {
                         // On supprime l'ancienne image du livre et on met à jour le livre en base
                         const filename = book.imageUrl.split('/images/resized_')[1];
                         fs.unlink(`images/resized_${filename}`, () => {
-                            Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                            Book.updateOne({ _id: req.params.id }, { ...bookObject })
                             .then(() => res.status(200).json({ message: 'Livre modifié !' }))
                             .catch(error => res.status(401).json({ error }));
                         });
                     }).catch(error => res.status(400).json({ error }));
                 } else {
                     // Sinon, on met à jour le livre sans nouvelle image
-                    Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
+                    Book.updateOne({ _id: req.params.id }, { ...bookObject })
                     .then(() => res.status(200).json({ message: 'Livre modifié !' }))
                     .catch(error => res.status(401).json({ error }));
                 }
