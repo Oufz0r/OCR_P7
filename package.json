@@ -1,0 +1,21 @@
+{
+  "name": "p7",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "front": "cd frontend && npm start",
+    "back": "cd backend && nodemon server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Oufz0r/OCR_P7.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Oufz0r/OCR_P7/issues"
+  },
+  "homepage": "https://github.com/Oufz0r/OCR_P7#readme"
+}
