@@ -9,17 +9,15 @@
 
 #### Pour le Backend
 
-Ouvrez un terminal et entrez dans le dossier backend avec la commande `cd backend`.
+Ouvrez un terminal et faites la commande `npm install` pour installer les dépendances.
 
-Faites la commande `npm install` pour installer les dépendances puis `nodemon server` pour lancer le backend du projet.
+Ensuite, entrez la commande `npm run back` pour lancer le backend du projet.
 
 #
 
 #### Pour le Frontend
 
-Ouvrez un nouveau terminal et entrez dans le dossier frontend avec la commande `cd frontend`.
-
-Faites la commande `npm start` pour lancer le frontend du projet.
+Ouvrez un nouveau terminal et faites la commande `npm run front` pour lancer le frontend du projet.
 
 #
 
