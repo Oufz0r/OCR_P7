@@ -5,11 +5,13 @@ const User = require('../models/User');
 
 exports.signup = (req, res, next) => {
     // utilisation d'une expression régulière pour vérifier que c'est bien un format email
-    const emailRegex = /^\S+@\S+\.\S+$/;
+    // const emailRegex = /^\S+@\S+\.\S+$/;
+    // const emailRegex = new RegExp(/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))/i);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(req.body.email)) {
         return res.status(400).json({ message: 'Adresse email invalide' });
     }
-    // contrôle de la longueur minimal du mot de passe
+    // contrôle de la longueur minimale du mot de passe
     if (req.body.password.length < 6) {
         return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 6 caractères' });
     }

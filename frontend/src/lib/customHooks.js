@@ -46,7 +46,7 @@ export function useFilePreview(file) {
         setImgSrc(newUrl);
       }
     }
-  }, [fileInput[0]?.name]);
+  }, [fileInput[0]?.name, file, imgSrc]);
 
   return [imgSrc, setImgSrc];
 }

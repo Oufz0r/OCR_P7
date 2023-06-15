@@ -28,7 +28,7 @@ function Book() {
       }
     }
     getItem();
-  }, []);
+  }, [book, params.id]);
 
   useEffect(() => {
     if (!userLoading && connectedUser && book?.title) {
@@ -43,7 +43,7 @@ function Book() {
     } else if (!userLoading && !connectedUser && book) {
       setLoading(false);
     }
-  }, [book, userLoading]);
+  }, [book, userLoading, connectedUser]);
 
   const onDelete = async (e) => {
     if (e.key && e.key !== 'Enter') {
